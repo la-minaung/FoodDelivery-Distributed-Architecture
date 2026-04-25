@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Grpc.Net.ClientFactory" Version="2.76.0" />
     <PackageReference Include="MassTransit" Version="9.1.0" />
     <PackageReference Include="MassTransit.RabbitMQ" Version="9.1.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />

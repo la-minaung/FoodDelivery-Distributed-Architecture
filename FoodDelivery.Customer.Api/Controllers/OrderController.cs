@@ -1,5 +1,6 @@
 ﻿using FoodDelivery.Customer.Api.DTOs;
 using FoodDelivery.Shared.Contracts.Events;
+using FoodDelivery.Shared.Contracts.gRPC;
 using MassTransit;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,26 +11,24 @@ namespace FoodDelivery.Customer.Api.Controllers
     public class OrderController : Controller
     {
         private readonly IPublishEndpoint _publishEndpoint;
+        private readonly RestaurantMenu.RestaurantMenuClient _grpcClient;
 
-        private static readonly Dictionary<string, decimal> _fakeMenu = new()
-        {
-            { "Spicy Fried Chicken", 15.99m },
-            { "Beef Burger", 12.50m },
-            { "Coca Cola", 2.00m }
-        };
-
-        public OrderController(IPublishEndpoint publishEndpoint)
+        public OrderController(IPublishEndpoint publishEndpoint, RestaurantMenu.RestaurantMenuClient grpcClient)
         {
             _publishEndpoint = publishEndpoint;
+            _grpcClient = grpcClient;
         }
 
         [HttpPost("place-order")]
         public async Task<IActionResult> PlaceOrder([FromBody] CheckoutRequest request)
         {
 
-            if (!_fakeMenu.ContainsKey(request.ItemName))
+            var grpcRequest = new MenuRequest { ItemName = request.ItemName };
+            var grpcResponse = await _grpcClient.CheckMenuAvailabilityAsync(grpcRequest);
+
+            if (!grpcResponse.IsAvailable)
             {
-                return BadRequest(new { Message = $"Sorry, we don't have '{request.ItemName}' in our menu." });
+                return BadRequest(new { Message = $"Sorry, '{request.ItemName}' is currently out of stock." });
             }
 
             var orderEvent = new OrderPlacedEvent
@@ -37,7 +36,7 @@ namespace FoodDelivery.Customer.Api.Controllers
                 OrderId = Guid.NewGuid().ToString(),
                 CustomerName = request.CustomerName,
                 ItemName = request.ItemName,
-                Price = _fakeMenu[request.ItemName],
+                Price = (decimal)grpcResponse.Price,
                 CreatedAt = DateTime.UtcNow
             };
 
