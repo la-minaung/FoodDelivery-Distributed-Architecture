@@ -14,7 +14,7 @@ namespace FoodDelivery.Restaurant.Service.Services
 
         public override Task<MenuResponse> CheckMenuAvailability(MenuRequest request, ServerCallContext context)
         {
-            var response = new MenuResponse();  
+            var response = new MenuResponse();
 
             if (_menu.TryGetValue(request.ItemName, out var price))
             {
@@ -28,6 +28,24 @@ namespace FoodDelivery.Restaurant.Service.Services
             }
 
             return Task.FromResult(response);
+        }
+
+        public override async Task SubscribeOrderStatus(OrderStatusRequest request, IServerStreamWriter<OrderStatusResponse> responseStream, ServerCallContext context)
+        {
+
+            var statuses = new[] { "Order Received", "Preparing Ingredients", "Cooking in Progress", "Packing", "Ready for Delivery" };
+
+            foreach (var status in statuses)
+            {
+                // Stop processing if the client disconnects or cancels the request
+                if (context.CancellationToken.IsCancellationRequested)
+                    break;
+
+                // Push the current status update to the client stream
+                await responseStream.WriteAsync(new OrderStatusResponse { Status = status });
+
+                await Task.Delay(2000);
+            }
         }
     }
 }
