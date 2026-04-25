@@ -6,6 +6,8 @@ package restaurant;
 
 service RestaurantMenu {
   rpc CheckMenuAvailability (MenuRequest) returns (MenuResponse);
+
+  rpc SubscribeOrderStatus (OrderStatusRequest) returns (stream OrderStatusResponse);
 }
 
 message MenuRequest {
@@ -15,4 +17,14 @@ message MenuRequest {
 message MenuResponse {
   bool is_available = 1;
   double price = 2;
+}
+
+
+//SubscribeOrderStatus
+message OrderStatusRequest {
+	string order_id = 1;
+}
+
+message OrderStatusResponse {
+	string status = 1;
 }
