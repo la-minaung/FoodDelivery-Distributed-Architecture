@@ -1,4 +1,5 @@
 using FoodDelivery.Shared.Contracts.Events;
+using FoodDelivery.Shared.Contracts.gRPC;
 using MassTransit;
 
 
@@ -25,6 +26,11 @@ builder.Services.AddMassTransit(x =>
             h.Password(rabbitConfig["Password"]);
         });
     });
+});
+
+builder.Services.AddGrpcClient<RestaurantMenu.RestaurantMenuClient>(o =>
+{
+    o.Address = new Uri("https://localhost:7139");
 });
 
 var app = builder.Build();
