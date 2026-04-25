@@ -76,5 +76,30 @@ namespace FoodDelivery.Restaurant.Service.Services
                 TotalPointsReceived = pointCount
             };
         }
+
+        public override async Task LiveChat(IAsyncStreamReader<ChatMessage> requestStream, IServerStreamWriter<ChatMessage> responseStream, ServerCallContext context)
+        {
+            // Read incoming messages from the client continuously
+            await foreach (var message in requestStream.ReadAllAsync())
+            {
+                // Stop processing if connection drops
+                if (context.CancellationToken.IsCancellationRequested)
+                    break;
+
+                _logger.LogInformation($"[INCOMING CHAT] {message.Sender}: {message.Text}");
+
+                // Simulate server processing time before replying
+                await Task.Delay(500);
+
+                var reply = new ChatMessage
+                {
+                    Sender = "Restaurant Bot",
+                    Text = $"We received your message: '{message.Text}'. Our team is checking."
+                };
+
+                // Push the reply back to the client immediately
+                await responseStream.WriteAsync(reply);
+            }
+        }
     }
 }

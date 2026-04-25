@@ -10,6 +10,8 @@ service RestaurantMenu {
   rpc SubscribeOrderStatus (OrderStatusRequest) returns (stream OrderStatusResponse);
 
   rpc SendRiderLocations (stream LocationRequest) returns (LocationSummaryResponse);
+
+  rpc LiveChat (stream ChatMessage) returns (stream ChatMessage);
 }
 
 message MenuRequest {
@@ -41,4 +43,10 @@ message LocationRequest {
 message LocationSummaryResponse {
 	string message = 1;
 	int32 total_points_received = 2;
+}
+
+//LiveChat
+message ChatMessage { 
+  string sender = 1; 
+  string text = 2; 
 }
