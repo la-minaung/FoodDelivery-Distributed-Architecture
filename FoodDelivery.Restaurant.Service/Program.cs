@@ -1,4 +1,5 @@
 using FoodDelivery.Restaurant.Service.Consumers;
+using FoodDelivery.Restaurant.Service.Services;
 using FoodDelivery.Shared.Contracts.Events;
 using MassTransit;
 
@@ -35,7 +36,11 @@ builder.Services.AddMassTransit(x =>
     });
 });
 
+builder.Services.AddGrpc();
+
 var app = builder.Build();
+
+app.MapGrpcService<RestaurantGrpcService>();
 
 app.MapGet("/", () => "Restaurant Worker Service is running and listening to RabbitMQ...");
 
