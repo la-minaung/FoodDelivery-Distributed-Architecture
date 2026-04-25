@@ -8,6 +8,8 @@ service RestaurantMenu {
   rpc CheckMenuAvailability (MenuRequest) returns (MenuResponse);
 
   rpc SubscribeOrderStatus (OrderStatusRequest) returns (stream OrderStatusResponse);
+
+  rpc SendRiderLocations (stream LocationRequest) returns (LocationSummaryResponse);
 }
 
 message MenuRequest {
@@ -27,4 +29,16 @@ message OrderStatusRequest {
 
 message OrderStatusResponse {
 	string status = 1;
+}
+
+//SendRiderLocations
+message LocationRequest {
+	string rider_id = 1;
+	double latitude = 2;
+	double longitude = 3;
+}
+
+message LocationSummaryResponse {
+	string message = 1;
+	int32 total_points_received = 2;
 }
