@@ -66,5 +66,44 @@ namespace FoodDelivery.Customer.Api.Controllers
 
             _logger.LogInformation("--- Tracking Completed for Order: {OrderId} ---", orderId);
         }
+
+        [HttpPost("simulate-rider/{riderId}")]
+        public async Task<IActionResult> SimulateRiderRoute(string riderId)
+        {
+            // Open a client stream connection to the gRPC server
+            using var call = _grpcClient.SendRiderLocations();
+
+            _logger.LogInformation("Started location streaming for rider {RiderId}", riderId);
+
+            // Simulate sending 5 GPS locations sequentially
+            for (int i = 0; i < 5; i++)
+            {
+                var location = new LocationRequest
+                {
+                    RiderId = riderId,
+                    Latitude = 13.7563 + (i * 0.001),
+                    Longitude = 100.5018 + (i * 0.001)
+                };
+
+                await call.RequestStream.WriteAsync(location);
+                _logger.LogInformation("Sent point {Point} to server.", i + 1);
+
+                await Task.Delay(1000); // 1 second delay between points
+            }
+
+            // Notify the server that the stream is complete
+            await call.RequestStream.CompleteAsync();
+
+            // Await the final summary response from the server
+            var response = await call.ResponseAsync;
+
+            _logger.LogInformation("Streaming completed. Server response: {Message}", response.Message);
+
+            return Ok(new
+            {
+                response.Message,
+                response.TotalPointsReceived
+            });
+        }
     }
 }

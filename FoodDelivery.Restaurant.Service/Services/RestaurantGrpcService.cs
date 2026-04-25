@@ -11,6 +11,12 @@ namespace FoodDelivery.Restaurant.Service.Services
             { "Beef Burger", 12.50 },
             { "Coca Cola", 2.00 }
         };
+        private readonly ILogger<RestaurantGrpcService> _logger;
+
+        public RestaurantGrpcService(ILogger<RestaurantGrpcService> logger)
+        {
+            _logger = logger;
+        }
 
         public override Task<MenuResponse> CheckMenuAvailability(MenuRequest request, ServerCallContext context)
         {
@@ -46,6 +52,29 @@ namespace FoodDelivery.Restaurant.Service.Services
 
                 await Task.Delay(2000);
             }
+        }
+
+        public override async Task<LocationSummaryResponse> SendRiderLocations(IAsyncStreamReader<LocationRequest> requestStream, ServerCallContext context)
+        {
+            int pointCount = 0;
+            string currentRiderId = string.Empty;
+
+            // Read locations continuously until the client completes the stream
+            await foreach (var location in requestStream.ReadAllAsync())
+            {
+                pointCount++;
+                currentRiderId = location.RiderId;
+
+                // Log the received coordinates silently
+                _logger.LogInformation($"Received location from {location.RiderId}: Lat {location.Latitude}, Lng {location.Longitude}");
+            }
+
+            // Return a single summary response after the stream ends
+            return new LocationSummaryResponse
+            {
+                Message = $"Tracking finished for rider {currentRiderId}.",
+                TotalPointsReceived = pointCount
+            };
         }
     }
 }
