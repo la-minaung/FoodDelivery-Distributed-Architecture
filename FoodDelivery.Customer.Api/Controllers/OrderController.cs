@@ -105,5 +105,46 @@ namespace FoodDelivery.Customer.Api.Controllers
                 response.TotalPointsReceived
             });
         }
+
+        [HttpPost("live-chat/{customerName}")]
+        public async Task<IActionResult> StartLiveChat(string customerName, [FromBody] List<string> messages)
+        {
+            using var call = _grpcClient.LiveChat();
+            var chatLog = new List<string>();
+
+            _logger.LogInformation("Starting live chat session for {CustomerName}", customerName);
+
+            // Task 1: Background thread to send messages to the server
+            var sendTask = Task.Run(async () =>
+            {
+                foreach (var msg in messages)
+                {
+                    var chatMessage = new ChatMessage { Sender = customerName, Text = msg };
+                    await call.RequestStream.WriteAsync(chatMessage);
+
+                    // Simulate user typing delay
+                    await Task.Delay(1000);
+                }
+
+                // Notify the server that we have finished sending
+                await call.RequestStream.CompleteAsync();
+            });
+
+            // Task 2: Background thread to read responses from the server
+            var readTask = Task.Run(async () =>
+            {
+                await foreach (var response in call.ResponseStream.ReadAllAsync())
+                {
+                    chatLog.Add($"{response.Sender}: {response.Text}");
+                }
+            });
+
+            // Wait for both sending and reading streams to complete
+            await Task.WhenAll(sendTask, readTask);
+
+            _logger.LogInformation("Live chat session completed for {CustomerName}", customerName);
+
+            return Ok(new { SessionEnd = true, ChatLog = chatLog });
+        }
     }
 }
