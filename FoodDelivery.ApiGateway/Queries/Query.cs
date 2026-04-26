@@ -5,14 +5,14 @@ namespace FoodDelivery.ApiGateway.Queries
 {
     public class Query
     {
-        public Restaurant GetRestaurantDetails([Service] RestaurantMockService restaurantService)
+        public async Task<Restaurant> GetRestaurantDetails([Service] RestaurantGrpcClientService restaurantService)
         {
-            return restaurantService.GetMockRestaurant();
+            return await restaurantService.GetRestaurantDetailsAsync();
         }
 
-        public MenuItem GetMenuItemById(int id, [Service] RestaurantMockService restaurantService)
+        public async Task<MenuItem> GetMenuItemById(int id, [Service] RestaurantGrpcClientService grpcService)
         {
-            return restaurantService.GetMenuItemById(id);
+            return await grpcService.GetMenuItemByIdAsync(id);
         }
     }
 }
