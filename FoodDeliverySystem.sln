@@ -11,7 +11,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FoodDelivery.Restaurant.Ser
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FoodDelivery.ApiGateway", "FoodDelivery.ApiGateway\FoodDelivery.ApiGateway.csproj", "{E5492676-23BA-4DB2-86DD-F88AAFC10C75}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FoodDelivery.Analytics.Service", "FoodDelivery.Analytics.Service\FoodDelivery.Analytics.Service.csproj", "{A6E0CD22-46A1-4C5F-9BAD-ABCE37D392C6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FoodDelivery.Analytics.Service", "FoodDelivery.Analytics.Service\FoodDelivery.Analytics.Service.csproj", "{A6E0CD22-46A1-4C5F-9BAD-ABCE37D392C6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{81A5F0EF-3A52-49B7-B178-B7CED612C974}"
+	ProjectSection(SolutionItems) = preProject
+		docker-compose.yml = docker-compose.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
