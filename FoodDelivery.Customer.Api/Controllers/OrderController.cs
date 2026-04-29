@@ -1,9 +1,11 @@
-﻿using FoodDelivery.Customer.Api.DTOs;
+﻿using Confluent.Kafka;
+using FoodDelivery.Customer.Api.DTOs;
 using FoodDelivery.Shared.Contracts.Events;
 using FoodDelivery.Shared.Contracts.gRPC;
 using Grpc.Core;
 using MassTransit;
 using Microsoft.AspNetCore.Mvc;
+using System.Text;
 
 namespace FoodDelivery.Customer.Api.Controllers
 {
@@ -14,12 +16,16 @@ namespace FoodDelivery.Customer.Api.Controllers
         private readonly IPublishEndpoint _publishEndpoint;
         private readonly RestaurantMenu.RestaurantMenuClient _grpcClient;
         private readonly ILogger<OrderController> _logger;
+        private readonly IProducer<string, string> _kafkaProducer;
+        private readonly IConfiguration _configuration;
 
-        public OrderController(IPublishEndpoint publishEndpoint, RestaurantMenu.RestaurantMenuClient grpcClient, ILogger<OrderController> logger)
+        public OrderController(IPublishEndpoint publishEndpoint, RestaurantMenu.RestaurantMenuClient grpcClient, ILogger<OrderController> logger, IProducer<string, string> kafkaProducer, IConfiguration configuration)
         {
             _publishEndpoint = publishEndpoint;
             _grpcClient = grpcClient;
             _logger = logger;
+            _kafkaProducer = kafkaProducer;
+            _configuration = configuration;
         }
 
         [HttpPost("place-order")]
@@ -43,7 +49,26 @@ namespace FoodDelivery.Customer.Api.Controllers
                 CreatedAt = DateTime.UtcNow
             };
 
+            // Send to RabbitMQ
             await _publishEndpoint.Publish(orderEvent);
+
+            // Send to Kafka
+            var auditMessage = $"[AUDIT] Order Placed | OrderId: {orderEvent.OrderId} | Customer: {request.CustomerName} | Item: {request.ItemName} | Time: {DateTime.UtcNow}";
+
+            // Prepare custom headers for metadata
+            var headers = new Confluent.Kafka.Headers();
+            headers.Add("Source-Service", Encoding.UTF8.GetBytes("FoodDelivery.Customer.Api"));
+            headers.Add("Event-Type", Encoding.UTF8.GetBytes("OrderCreatedEvent"));
+            headers.Add("Correlation-Id", Encoding.UTF8.GetBytes(Guid.NewGuid().ToString()));
+
+            var topicName = _configuration["Kafka:TopicName"];
+
+            await _kafkaProducer.ProduceAsync(topicName, new Message<string, string>
+            {
+                Key = orderEvent.OrderId,
+                Value = auditMessage,
+                Headers = headers
+            });
 
             return Accepted(new { Message = "Order received successfully!", OrderDetails = orderEvent });
         }
