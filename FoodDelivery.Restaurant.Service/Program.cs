@@ -1,12 +1,29 @@
 using FoodDelivery.Restaurant.Service.Consumers;
+using FoodDelivery.Restaurant.Service.Data;
 using FoodDelivery.Restaurant.Service.Services;
 using FoodDelivery.Shared.Contracts.Events;
+using Microsoft.EntityFrameworkCore;
 using MassTransit;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
+// register sql server
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<RestaurantDbContext>(options =>
+{
+    options.UseSqlServer(connectionString);
+});
+
 builder.Services.AddMassTransit(x =>
 {
+
+    x.AddEntityFrameworkOutbox<RestaurantDbContext>(o =>
+    {
+        o.UseSqlServer();
+        o.UseBusOutbox();
+    });
+
     x.AddConsumer<OrderPlacedConsumer>();
 
     x.UsingRabbitMq((context, cfg) =>
